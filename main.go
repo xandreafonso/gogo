@@ -1,88 +1,57 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/xandreafonso/gogo/internal/application/usecase"
-	"github.com/xandreafonso/gogo/internal/infra/database"
+	"time"
 )
 
-type Car struct {
-	Model string
-	Color string
-}
-
-func (c Car) Start() {
-	println(c.Model + " is started")
-}
-
-// func funcaoComum(x, y int) int {
-// 	return x + y
+// func processando() {
+// 	for i := 0; i < 10; i++ {
+// 		fmt.Println(i)
+// 		time.Sleep(time.Second)
+// 	}
 // }
-
-// func (c Car) ChangeColor(color string) {
-// 	c.Color = color // cópia do color original
-// 	println("New color: " + c.Color)
-// }
-
-func (c *Car) ChangeColor(color string) {
-	c.Color = color // agora muda a color original
-	println("New color: " + c.Color)
-}
 
 func main() {
-	// car := Car{Model: "Ferrari", Color: "Red"}
-	// println(car.Model)
-	// car.Start()
+	// go processando()
+	// go processando()
+	// processando()
 
-	// car.ChangeColor("Blue")
+	canal := make(chan int)
 
-	// car.Model = "Fiat"
-	// car.Start()
-	// println(car.Color)
+	go func() {
+		// canal <- 1 // preencher o canal
 
-	// a := 10
-	// // b := a // b copiou o valor de a, mas guardou em um espaço próprio de memória
-	// b := &a // agora b aponta para o endereço da memória de a
-	// // b = 20
-	// *b = 20 // assim o a também passa valer 20
+		for i := 0; i < 10; i++ {
+			canal <- i
+			fmt.Println("A jogou i no canal", i)
+		}
+	}()
 
-	// println(a)
-	// println(&a) // endereço onde o valor de a está armazenado
-	// println(b)
-	// println(a)
+	go func() {
+		for i := 0; i < 10; i++ {
+			canal <- i
+			fmt.Println("B jogou i no canal", i)
+		}
+	}()
 
-	// order, err := entity.NewOrder("1", 50.0, 5.5)
+	// go fmt.Println(<-canal) // esvaziar o canal
+	// time.Sleep(time.Second * 2)
 
-	// if err != nil {
-	// 	println(err.Error())
-	// } else {
-	// 	println(order.Id)
+	// for x := range canal { // loop infinito que vai ficar lendo o canal
+	// 	fmt.Println(x)
+	// 	fmt.Println("Recebeu i do canal", x)
+	// 	time.Sleep(time.Second)
 	// }
 
-	db, err := sql.Open("sqlite3", "db.sqlite3")
+	go worker(canal, 1)
+	worker(canal, 2)
 
-	if err != nil {
-		panic(err)
+}
+
+func worker(canal chan int, workerId int) {
+	for {
+		fmt.Println("Recebeu do canal", <-canal, " no worker ", workerId)
+		time.Sleep(time.Second)
 	}
-
-	orderRepository := database.NewOrderRepositorySQL(db)
-
-	usecaseCFP := usecase.NewCalculateFinalPrice(orderRepository)
-
-	input := usecase.OrderInput{
-		Id:    "12345",
-		Price: 10.0,
-		Tax:   1.0,
-	}
-
-	output, err := usecaseCFP.Execute(input)
-
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(output)
 }

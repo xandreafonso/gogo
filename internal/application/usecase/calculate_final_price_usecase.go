@@ -6,9 +6,9 @@ import (
 )
 
 type OrderInput struct {
-	Id    string
-	Price float64
-	Tax   float64
+	Id    string  `json:"id"`
+	Price float64 `json:"price"`
+	Tax   float64 `json:"tax"`
 }
 
 type OrderOutput struct {
